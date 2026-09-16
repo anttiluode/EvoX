@@ -4,9 +4,11 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from .descriptors import behavior_matrix
 from .program import Node, evaluate, mutate_tree, node_count, random_tree, syntax_features, to_source
 
 Example = tuple[tuple[int, int, int], float]
+Input = tuple[int, int, int]
 
 
 @dataclass(frozen=True)
@@ -27,6 +29,7 @@ class EvolutionResult:
     viable: tuple[Individual, ...]
     evaluations: int
     archive: tuple[Individual, ...] = ()
+    descriptor_executions: int = 0
 
 
 def program_mse(tree: Node, examples: list[Example] | tuple[Example, ...]) -> float:
@@ -78,57 +81,107 @@ def _select_elites(population: list[Individual], elite_count: int) -> list[Indiv
     return elites
 
 
-def _select_structural_novelty(
-    population: list[Individual], elite_count: int, novelty_fraction: float = 0.5
-) -> list[Individual]:
+def _unique_best_candidates(population: list[Individual]) -> list[Individual]:
     ranked = sorted(population, key=_rank_key)
-    baseline_count = max(1, elite_count - int(round(elite_count * novelty_fraction)))
-    selected = _select_elites(population, baseline_count)
-    selected_sources = {to_source(ind.tree) for ind in selected}
-
     best_mse = ranked[0].mse
     candidates = [ind for ind in ranked if abs(ind.mse - best_mse) <= 1e-15]
-    unique_candidates: list[Individual] = []
+    unique: list[Individual] = []
     seen: set[str] = set()
     for ind in candidates:
         source = to_source(ind.tree)
         if source in seen:
             continue
         seen.add(source)
-        unique_candidates.append(ind)
+        unique.append(ind)
+    return unique
+
+
+def _farthest_point_fill(
+    selected: list[Individual],
+    candidates: list[Individual],
+    vectors_by_id: dict[int, np.ndarray],
+    elite_count: int,
+) -> list[Individual]:
+    selected_sources = {to_source(ind.tree) for ind in selected}
+    while len(selected) < elite_count:
+        available = [ind for ind in candidates if to_source(ind.tree) not in selected_sources]
+        if not available:
+            break
+        selected_vectors = [vectors_by_id[ind.id] for ind in selected if ind.id in vectors_by_id]
+        if not selected_vectors:
+            choice = available[0]
+        else:
+            best_choice: Individual | None = None
+            best_distance = -1.0
+            for ind in available:
+                vector = vectors_by_id[ind.id]
+                distance = min(float(np.linalg.norm(vector - other)) for other in selected_vectors)
+                if distance > best_distance + 1e-12:
+                    best_choice = ind
+                    best_distance = distance
+                elif (
+                    abs(distance - best_distance) <= 1e-12
+                    and best_choice is not None
+                    and _rank_key(ind) < _rank_key(best_choice)
+                ):
+                    best_choice = ind
+            choice = best_choice if best_choice is not None else available[0]
+        selected.append(choice)
+        selected_sources.add(to_source(choice.tree))
+    return selected
+
+
+def _select_structural_novelty(
+    population: list[Individual], elite_count: int, novelty_fraction: float = 0.5
+) -> list[Individual]:
+    baseline_count = max(1, elite_count - int(round(elite_count * novelty_fraction)))
+    selected = _select_elites(population, baseline_count)
+    unique_candidates = _unique_best_candidates(population)
 
     if unique_candidates:
         matrix = np.stack([syntax_features(ind.tree) for ind in unique_candidates])
         scale = np.std(matrix, axis=0)
         scale[scale == 0.0] = 1.0
         normalized = (matrix - np.mean(matrix, axis=0)) / scale
-        index_by_id = {ind.id: i for i, ind in enumerate(unique_candidates)}
+        vectors_by_id = {
+            ind.id: normalized[index] for index, ind in enumerate(unique_candidates)
+        }
+        selected = _farthest_point_fill(selected, unique_candidates, vectors_by_id, elite_count)
 
-        while len(selected) < elite_count:
-            available = [ind for ind in unique_candidates if to_source(ind.tree) not in selected_sources]
-            if not available:
+    if len(selected) < elite_count:
+        for ind in _select_elites(population, elite_count):
+            if len(selected) == elite_count:
                 break
-            selected_vectors = [normalized[index_by_id[ind.id]] for ind in selected if ind.id in index_by_id]
-            if not selected_vectors:
-                choice = available[0]
-            else:
-                best_choice = None
-                best_distance = -1.0
-                for ind in available:
-                    vector = normalized[index_by_id[ind.id]]
-                    distance = min(float(np.linalg.norm(vector - other)) for other in selected_vectors)
-                    if distance > best_distance + 1e-12:
-                        best_choice = ind
-                        best_distance = distance
-                    elif (
-                        abs(distance - best_distance) <= 1e-12
-                        and best_choice is not None
-                        and _rank_key(ind) < _rank_key(best_choice)
-                    ):
-                        best_choice = ind
-                choice = best_choice if best_choice is not None else available[0]
-            selected.append(choice)
-            selected_sources.add(to_source(choice.tree))
+            if ind.id not in {item.id for item in selected}:
+                selected.append(ind)
+    return selected[:elite_count]
+
+
+def _select_behavioral_novelty(
+    population: list[Individual],
+    elite_count: int,
+    novelty_fraction: float,
+    descriptor_inputs: list[Input] | tuple[Input, ...],
+) -> list[Individual]:
+    if not descriptor_inputs:
+        raise ValueError("behavioral_novelty requires descriptor_inputs")
+    baseline_count = max(1, elite_count - int(round(elite_count * novelty_fraction)))
+    selected = _select_elites(population, baseline_count)
+    unique_candidates = _unique_best_candidates(population)
+
+    if unique_candidates:
+        # Evaluate the whole current population so descriptor accounting is exact
+        # and strategy-independent of syntax deduplication details.
+        population_behavior = behavior_matrix([ind.tree for ind in population], descriptor_inputs)
+        row_by_id = {ind.id: index for index, ind in enumerate(population)}
+        matrix = np.stack([population_behavior[row_by_id[ind.id]] for ind in unique_candidates])
+        scale = np.std(matrix, axis=0)
+        scale[scale == 0.0] = 1.0
+        normalized = (matrix - np.mean(matrix, axis=0)) / scale
+        vectors_by_id = {
+            ind.id: normalized[index] for index, ind in enumerate(unique_candidates)
+        }
+        selected = _farthest_point_fill(selected, unique_candidates, vectors_by_id, elite_count)
 
     if len(selected) < elite_count:
         for ind in _select_elites(population, elite_count):
@@ -159,12 +212,22 @@ def _select_lineage_niching(population: list[Individual], elite_count: int) -> l
 
 
 def _select_elites_for_strategy(
-    population: list[Individual], elite_count: int, strategy: str, novelty_fraction: float = 0.5
+    population: list[Individual],
+    elite_count: int,
+    strategy: str,
+    novelty_fraction: float = 0.5,
+    descriptor_inputs: list[Input] | tuple[Input, ...] | None = None,
 ) -> list[Individual]:
     if strategy in {"baseline", "neutral_archive"}:
         return _select_elites(population, elite_count)
     if strategy == "structural_novelty":
         return _select_structural_novelty(population, elite_count, novelty_fraction)
+    if strategy == "behavioral_novelty":
+        if descriptor_inputs is None:
+            raise ValueError("behavioral_novelty requires descriptor_inputs")
+        return _select_behavioral_novelty(
+            population, elite_count, novelty_fraction, descriptor_inputs
+        )
     if strategy == "lineage_niching":
         return _select_lineage_niching(population, elite_count)
     raise ValueError(f"unknown strategy: {strategy}")
@@ -184,13 +247,22 @@ def evolve(
     archive_capacity: int = 64,
     archive_fraction: float = 0.25,
     novelty_fraction: float = 0.5,
+    descriptor_inputs: list[Input] | tuple[Input, ...] | None = None,
 ) -> EvolutionResult:
     if population_size <= 0 or generations <= 0:
         raise ValueError("population_size and generations must be positive")
     if not 1 <= elite_count <= population_size:
         raise ValueError("elite_count must be between 1 and population_size")
-    if strategy not in {"baseline", "structural_novelty", "lineage_niching", "neutral_archive"}:
+    if strategy not in {
+        "baseline",
+        "structural_novelty",
+        "behavioral_novelty",
+        "lineage_niching",
+        "neutral_archive",
+    }:
         raise ValueError(f"unknown strategy: {strategy}")
+    if strategy == "behavioral_novelty" and not descriptor_inputs:
+        raise ValueError("behavioral_novelty requires descriptor_inputs")
     if archive_capacity <= 0:
         raise ValueError("archive_capacity must be positive")
     if not 0.0 <= archive_fraction <= 1.0:
@@ -209,6 +281,7 @@ def evolve(
     population: list[Individual] = []
     archive_by_source: dict[str, Individual] = {}
     archive_cursor = 0
+    descriptor_executions = 0
     for tree in trees:
         ind = _make_individual(ident, 0, None, ident, tree, examples)
         ident += 1
@@ -238,7 +311,11 @@ def evolve(
                 else 0
             )
             current_slots = elite_count - archive_slots
-            elites = _select_elites_for_strategy(population, current_slots, "baseline") if current_slots else []
+            elites = (
+                _select_elites_for_strategy(population, current_slots, "baseline")
+                if current_slots
+                else []
+            )
             selected_sources = {to_source(item.tree) for item in elites}
             archived_items = list(archive_by_source.values())
             attempts = 0
@@ -258,7 +335,15 @@ def evolve(
                     if item.id not in {existing.id for existing in elites}:
                         elites.append(item)
         else:
-            elites = _select_elites_for_strategy(population, elite_count, strategy, novelty_fraction)
+            elites = _select_elites_for_strategy(
+                population,
+                elite_count,
+                strategy,
+                novelty_fraction,
+                descriptor_inputs,
+            )
+            if strategy == "behavioral_novelty":
+                descriptor_executions += population_size * len(descriptor_inputs or ())
         next_population: list[Individual] = []
 
         # Re-evaluate elite copies so every generation has exactly population_size evaluations.
@@ -285,4 +370,5 @@ def evolve(
         viable=viable,
         evaluations=population_size * generations,
         archive=tuple(archive_by_source.values()),
+        descriptor_executions=descriptor_executions,
     )
