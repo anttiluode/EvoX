@@ -23,6 +23,23 @@ jobs:
           if [ "$mode" = "pilot" ]; then
             python -m experiments.run_v2_behavioral --seed-start 500 --seed-count 8 --out results/v2_pilot.json
             echo "RESULT=results/v2_pilot.json" >> "$GITHUB_ENV"
+          elif [ "$mode" = "fraction-sweep" ]; then
+            python - <<'PY'
+          import json
+          from pathlib import Path
+          from experiments.run_v2_behavioral import V2Config, run_strategy_seed, summarize_strategy
+
+          output = {}
+          for fraction in (0.25, 0.50, 0.75, 1.00):
+              config = V2Config(novelty_fraction=fraction)
+              rows = [run_strategy_seed("behavioral_generic", seed, config) for seed in range(500, 508)]
+              output[str(fraction)] = summarize_strategy(rows, config)
+          path = Path("results/v2_fraction_sweep.json")
+          path.parent.mkdir(parents=True, exist_ok=True)
+          path.write_text(json.dumps(output, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+          print(json.dumps(output, indent=2, sort_keys=True))
+          PY
+            echo "RESULT=results/v2_fraction_sweep.json" >> "$GITHUB_ENV"
           elif [ "$mode" = "canonical" ]; then
             python -m experiments.run_v2_behavioral --seed-start 600 --seed-count 32 --out results/v2_behavioral.json
             echo "RESULT=results/v2_behavioral.json" >> "$GITHUB_ENV"
@@ -30,14 +47,11 @@ jobs:
             echo "Unknown experiment trigger: $mode" >&2
             exit 2
           fi
-      - name: Show summary
-        run: python - <<'PY'
-          import json, os
-          d=json.load(open(os.environ['RESULT']))
-          print(json.dumps(d['summaries'], indent=2, sort_keys=True))
-          print(json.dumps(d['classifications'], indent=2, sort_keys=True))
-          PY
+      - name: Show receipt
+        run: |
+          python -c 'import json,os; d=json.load(open(os.environ["RESULT"])); print(json.dumps(d.get("summaries", d), indent=2, sort_keys=True)); print(json.dumps(d.get("classifications", {}), indent=2, sort_keys=True))'
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: evox-v2-${{ github.sha }}
           path: ${{ env.RESULT }}
