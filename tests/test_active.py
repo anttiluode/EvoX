@@ -9,6 +9,7 @@ from evox.active import (
     choose_intervention,
     expected_information_gain,
     posterior_update,
+    run_identification,
 )
 
 
@@ -106,3 +107,83 @@ def test_gaussian_quadrature_weights_are_normalized():
     points = dist.quadrature()
     assert len(points) == 17
     assert sum(weight for _, weight in points) == pytest.approx(1.0, abs=1e-12)
+
+
+def _three_way_problem():
+    hypotheses = ("h0", "h1", "h2")
+    interventions = ("flat", "binary", "separate")
+    table = {
+        "flat": {"h0": "x", "h1": "x", "h2": "x"},
+        "binary": {"h0": "x", "h1": "y", "h2": "y"},
+        "separate": {"h0": "x", "h1": "y", "h2": "z"},
+    }
+
+    def predict(hypothesis, intervention):
+        return CategoricalDistribution({table[intervention][hypothesis]: 1.0})
+
+    return hypotheses, interventions, table, predict
+
+
+def test_active_identification_stops_on_confidence_and_records_trace():
+    hypotheses, interventions, table, predict = _three_way_problem()
+    truth = "h2"
+    result = run_identification(
+        hypotheses,
+        interventions,
+        predict,
+        lambda intervention: table[intervention][truth],
+        budget=3,
+        confidence=0.99,
+        policy="active",
+        rng=np.random.default_rng(1),
+    )
+    assert result.map_hypothesis == truth
+    assert result.reached_confidence
+    assert result.probes_used == 1
+    assert len(result.steps) == 1
+    step = result.steps[0]
+    assert step.intervention == "separate"
+    assert np.allclose(step.prior, np.asarray([1 / 3, 1 / 3, 1 / 3]))
+    assert np.isclose(step.posterior.sum(), 1.0)
+    assert step.posterior[2] == pytest.approx(1.0)
+    assert step.information_gain > 1.5
+
+
+def test_random_identification_obeys_budget_and_does_not_reuse_probes():
+    hypotheses, interventions, table, predict = _three_way_problem()
+    truth = "h1"
+    result = run_identification(
+        hypotheses,
+        interventions,
+        predict,
+        lambda intervention: table[intervention][truth],
+        budget=2,
+        confidence=0.999999,
+        policy="random",
+        rng=np.random.default_rng(42),
+    )
+    assert result.probes_used <= 2
+    assert len(result.steps) == result.probes_used
+    chosen = [step.intervention for step in result.steps]
+    assert len(chosen) == len(set(chosen))
+    assert all(np.isclose(step.posterior.sum(), 1.0) for step in result.steps)
+
+
+def test_identification_rejects_invalid_budget_policy_and_confidence():
+    hypotheses, interventions, table, predict = _three_way_problem()
+    observe = lambda intervention: table[intervention]["h0"]
+    with pytest.raises(ValueError):
+        run_identification(
+            hypotheses, interventions, predict, observe,
+            budget=0, confidence=0.9, policy="active", rng=np.random.default_rng(0)
+        )
+    with pytest.raises(ValueError):
+        run_identification(
+            hypotheses, interventions, predict, observe,
+            budget=1, confidence=1.1, policy="active", rng=np.random.default_rng(0)
+        )
+    with pytest.raises(ValueError):
+        run_identification(
+            hypotheses, interventions, predict, observe,
+            budget=1, confidence=0.9, policy="greedy", rng=np.random.default_rng(0)
+        )
