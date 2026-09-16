@@ -30,7 +30,8 @@ class V2Config(V0Config):
     elite_count: int = 24
     canonical_seed_start: int = 600
     canonical_seed_count: int = 32
-    novelty_fraction: float = 0.75
+    structural_novelty_fraction: float = 0.75
+    behavioral_novelty_fraction: float = 0.50
     descriptor_length: int = 32
     generic_descriptor_seed: int = 271828
     manifold_descriptor_seed: int = 314159
@@ -79,12 +80,15 @@ def run_strategy_seed(strategy: str, seed: int, config: V2Config) -> dict[str, o
     if strategy == "baseline":
         evolution_strategy = "baseline"
         descriptor_inputs = None
+        novelty_fraction = config.behavioral_novelty_fraction
     elif strategy == "structural_novelty":
         evolution_strategy = "structural_novelty"
         descriptor_inputs = None
+        novelty_fraction = config.structural_novelty_fraction
     else:
         evolution_strategy = "behavioral_novelty"
         descriptor_inputs = tape
+        novelty_fraction = config.behavioral_novelty_fraction
 
     evolution = evolve(
         visible_examples(),
@@ -95,7 +99,7 @@ def run_strategy_seed(strategy: str, seed: int, config: V2Config) -> dict[str, o
         max_depth=config.max_depth,
         viable_mse=config.viable_mse,
         strategy=evolution_strategy,
-        novelty_fraction=config.novelty_fraction,
+        novelty_fraction=novelty_fraction,
         descriptor_inputs=descriptor_inputs,
     )
 
