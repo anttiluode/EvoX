@@ -209,3 +209,25 @@ Do not jump to ARC yet.
 First attack the actual V0 weakness: preserve alternatives **without using counterfactual probe outputs**. Candidate controls include structural novelty, genealogy-aware niching, and neutral archives. The experiment should ask whether those mechanisms raise minority-mode mass and valid-seed rate while leaving mode extraction and active probing blind to family labels.
 
 If that survives, then the same interfaces can be attached to generated ARC-style program tasks or symbolic-regression problems.
+
+
+# V1 — preserving the alternative procedure
+
+V0 exposed a bottleneck: the active mode machinery works **if** evolution leaves more than one procedure alive. V1 tested three preservation mechanisms that were blind to counterfactual target outputs: structural syntax novelty, root-lineage niching, and a neutral solution archive.
+
+On disjoint canonical seeds 400–431, none passed the frozen preservation gate:
+
+| strategy | valid two-mode seeds | minority-mode mass |
+|---|---:|---:|
+| baseline | 17/32 (53.1%) | 4.4% |
+| structural novelty | **23/32 (71.9%)** | **7.3%** |
+| root-lineage niching | 17/32 (53.1%) | 6.8% |
+| neutral archive | 16/32 (50.0%) | 4.1% |
+
+The required gate was 85% valid seeds and 15% minority mass. All three interventions are therefore classified `NO_PRESERVATION_GAIN`. Structural novelty is a real partial improvement, but not enough.
+
+Crucially, when both modes survived, V0's later machinery still worked: under structural novelty active probing used 1.00 probe to confidence versus 2.26 for random, and correct-mode transfer averaged 36.2 evaluations versus 293.5 for fresh restart.
+
+The negative result changes the next question. Generic syntax, ancestry, and history are not reliable proxies for **computation**. V2 should preserve diversity in program outputs on **unlabeled counterfactual inputs**: the system may know that two procedures respond differently without being told which response is correct. Only later does an actual observation select the useful mode.
+
+See [`docs/V1_DIVERSITY.md`](docs/V1_DIVERSITY.md) and [`results/v1_diversity.json`](results/v1_diversity.json).
