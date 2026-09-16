@@ -258,3 +258,29 @@ Once an alternate mode exists, the downstream half remains strong: active probin
 At this point another novelty proxy is not the interesting next gate. The evidence separates two problems: **identifying/reusing a surviving procedure works; manufacturing useful population mass does not.** The next experiment should either graduate the active-diagnosis machinery into a broader black-box setting, or change the selection ecology so multiple computations have an explicit reason to remain viable rather than asking novelty alone to preserve them.
 
 Full discussion: [`docs/V2_RESULTS.md`](docs/V2_RESULTS.md). Frozen receipt: [`results/v2_behavioral.json`](results/v2_behavioral.json).
+
+# V3 — generic active mechanism selection and reuse
+
+V3 graduates the part of EvoX that kept working: **given several executable explanations, choose the intervention that best separates them and then reuse the identified mechanism instead of restarting.**
+
+The original two-mode machinery was replaced by a domain-agnostic finite-hypothesis Bayesian engine. Domains provide only candidate hypotheses, allowed interventions, predictive observation distributions, an observation callback, and adaptation/restart operations. The shared engine supports categorical and Gaussian observations and does not know which domain it is running.
+
+Five frozen adapters were tested on canonical seeds 800–927:
+
+| domain | canonical result | active accuracy | random accuracy | active probes | random probes | active reuse | restart |
+|---|---|---:|---:|---:|---:|---:|---:|
+| regression fault | `PASS` | **1.000** | 0.750 | **2.000** | 2.367 | **1.000** | 2.500 |
+| state machine | `PASS` | **1.000** | 0.852 | **1.000** | 1.797 | **1.000** | 3.250 |
+| program transform | `PASS` | **1.000** | 0.891 | **1.000** | 2.062 | **1.000** | 2.500 |
+| dynamics | `PASS` | **0.969** | 0.852 | **1.352** | 2.023 | **1.000** | 9.750 censored |
+| causal circuit | `FAIL_IDENTIFICATION_EFFICIENCY` | **0.992** | 0.961 | **1.305** | 1.648 | **1.031** | 4.000 |
+
+The frozen overall gate required **every** domain to pass, so V3 is not a universal PASS: `overall_pass = false` with **4/5 domains passing**. The causal-circuit arm still benefits from active probing, but its advantage is smaller than the predeclared efficiency margin and was not retuned after canonical exposure.
+
+The useful result is therefore narrower and more practical than the original evolutionary story:
+
+> **Once plausible executable mechanisms exist, one common active-experiment engine can identify and immediately exploit them across several substantially different black-box domains.**
+
+That does not solve the earlier preservation problem, and it does not yet establish performance on a real operational benchmark. The next serious step is to attach this interface to real candidate explanations and real interventions rather than invent another synthetic diversity proxy.
+
+See [`docs/V3_RESULTS.md`](docs/V3_RESULTS.md) and the exact frozen receipt [`results/v3_active_mechanisms.json`](results/v3_active_mechanisms.json).
