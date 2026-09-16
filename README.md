@@ -231,3 +231,30 @@ Crucially, when both modes survived, V0's later machinery still worked: under st
 The negative result changes the next question. Generic syntax, ancestry, and history are not reliable proxies for **computation**. V2 should preserve diversity in program outputs on **unlabeled counterfactual inputs**: the system may know that two procedures respond differently without being told which response is correct. Only later does an actual observation select the useful mode.
 
 See [`docs/V1_DIVERSITY.md`](docs/V1_DIVERSITY.md) and [`results/v1_diversity.json`](results/v1_diversity.json).
+
+# V2 — unlabeled behavior rescues presence, not abundance
+
+V2 used a generic unlabeled input tape as the novelty descriptor. It never saw target outputs, hidden family labels, or the later transfer target. A destructive in-manifold control used unlabeled inputs on which the two reference procedures agree.
+
+On frozen canonical seeds 600–631:
+
+| strategy | valid two-mode seeds | minority mass when present | minority mass across all seeds |
+|---|---:|---:|---:|
+| baseline | 20/32 (62.5%) | 4.62% | 2.89% |
+| in-manifold behavioral control | 20/32 (62.5%) | 4.62% | 2.89% |
+| generic behavioral novelty | **30/32 (93.75%)** | 4.99% | **4.68%** |
+| structural novelty | 28/32 (87.5%) | **9.34%** | **8.17%** |
+
+The frozen classifier calls the behavioral arm `FUNCTIONAL_BUT_THIN`: it clears the 85% mode-presence gate, preserves the active-probe/transfer mechanism, but misses the required **15% minority-mass** gate by a wide margin.
+
+The control is especially useful: its descriptor has exactly zero variance and its aggregate behavior is identical to baseline. So generic behavioral novelty really does reduce complete extinction of the alternate procedure without receiving hidden labels. But it does **not** make that procedure abundant. Structural novelty remains much stronger on minority mass and costs no extra descriptor executions; behavioral novelty uses **61,440 extra program executions per seed**.
+
+The narrow conclusion is therefore:
+
+> **Unlabeled behavioral novelty can keep an alternative computation from disappearing, but it does not make that alternative competitively populous.**
+
+Once an alternate mode exists, the downstream half remains strong: active probing needs 1.00 probe to confidence versus 2.58 for random in the behavioral arm, and correct-mode transfer averages 56.65 evaluations versus 296.92 for fresh restart.
+
+At this point another novelty proxy is not the interesting next gate. The evidence separates two problems: **identifying/reusing a surviving procedure works; manufacturing useful population mass does not.** The next experiment should either graduate the active-diagnosis machinery into a broader black-box setting, or change the selection ecology so multiple computations have an explicit reason to remain viable rather than asking novelty alone to preserve them.
+
+Full discussion: [`docs/V2_RESULTS.md`](docs/V2_RESULTS.md). Frozen receipt: [`results/v2_behavioral.json`](results/v2_behavioral.json).
