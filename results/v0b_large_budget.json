@@ -1,0 +1,41 @@
+{
+  "canonical_seed_range": [200, 215],
+  "classification": "PASS_ACTIVE_MODES",
+  "config": {"canonical_seed_count": 16, "canonical_seed_start": 200, "elite_count": 32, "generations": 24, "max_depth": 3, "max_probes": 3, "mode_probe_count": 120, "population_size": 192, "posterior_confidence": 0.95, "probe_sigma": 2.0, "transfer_elites": 12, "transfer_generations": 8, "transfer_population": 64, "viable_mse": 1e-12},
+  "experiment": "EvoX v0b diversity budget attack",
+  "pilot_seed_range_used_for_design": [0, 7],
+  "predeclaration": "population/generation budget only; all downstream machinery unchanged",
+  "seed_receipts": [
+    {"ancestry": {"links": 62, "transition_rate": 0.0}, "cluster_sizes": [61, 1], "explained_variance": 1.0, "mode_purity": 1.0, "retained_rank": 1, "seed": 200, "status": "OK", "viable_count": 62},
+    {"reason": "behavioral population has zero variance", "seed": 201, "status": "INSUFFICIENT_DIVERSITY", "viable_count": 60},
+    {"ancestry": {"links": 61, "transition_rate": 0.0}, "cluster_sizes": [56, 5], "explained_variance": 1.0, "mode_purity": 1.0, "retained_rank": 1, "seed": 202, "status": "OK", "viable_count": 61},
+    {"ancestry": {"links": 67, "transition_rate": 0.0}, "cluster_sizes": [65, 2], "explained_variance": 1.0, "mode_purity": 1.0, "retained_rank": 1, "seed": 203, "status": "OK", "viable_count": 67},
+    {"ancestry": {"links": 62, "transition_rate": 0.016129032258064516}, "cluster_sizes": [60, 2], "explained_variance": 1.0, "mode_purity": 1.0, "retained_rank": 1, "seed": 204, "status": "OK", "viable_count": 62},
+    {"ancestry": {"links": 72, "transition_rate": 0.0}, "cluster_sizes": [68, 4], "explained_variance": 1.0, "mode_purity": 1.0, "retained_rank": 1, "seed": 205, "status": "OK", "viable_count": 72},
+    {"ancestry": {"links": 68, "transition_rate": 0.014705882352941176}, "cluster_sizes": [64, 4], "explained_variance": 1.0, "mode_purity": 1.0, "retained_rank": 1, "seed": 206, "status": "OK", "viable_count": 68},
+    {"ancestry": {"links": 58, "transition_rate": 0.0}, "cluster_sizes": [55, 3], "explained_variance": 1.0, "mode_purity": 1.0, "retained_rank": 1, "seed": 207, "status": "OK", "viable_count": 58},
+    {"ancestry": {"links": 56, "transition_rate": 0.0}, "cluster_sizes": [53, 3], "explained_variance": 1.0, "mode_purity": 1.0, "retained_rank": 1, "seed": 208, "status": "OK", "viable_count": 56},
+    {"ancestry": {"links": 63, "transition_rate": 0.015873015873015872}, "cluster_sizes": [61, 2], "explained_variance": 1.0, "mode_purity": 1.0, "retained_rank": 1, "seed": 209, "status": "OK", "viable_count": 63},
+    {"reason": "behavioral population has zero variance", "seed": 210, "status": "INSUFFICIENT_DIVERSITY", "viable_count": 71},
+    {"ancestry": {"links": 65, "transition_rate": 0.0}, "cluster_sizes": [62, 3], "explained_variance": 1.0, "mode_purity": 1.0, "retained_rank": 1, "seed": 211, "status": "OK", "viable_count": 65},
+    {"ancestry": {"links": 58, "transition_rate": 0.0}, "cluster_sizes": [55, 3], "explained_variance": 1.0, "mode_purity": 1.0, "retained_rank": 1, "seed": 212, "status": "OK", "viable_count": 58},
+    {"reason": "behavioral population has zero variance", "seed": 213, "status": "INSUFFICIENT_DIVERSITY", "viable_count": 62},
+    {"ancestry": {"links": 61, "transition_rate": 0.01639344262295082}, "cluster_sizes": [58, 3], "explained_variance": 1.0, "mode_purity": 1.0, "retained_rank": 1, "seed": 214, "status": "OK", "viable_count": 61},
+    {"ancestry": {"links": 59, "transition_rate": 0.0}, "cluster_sizes": [58, 1], "explained_variance": 1.0, "mode_purity": 1.0, "retained_rank": 1, "seed": 215, "status": "OK", "viable_count": 59}
+  ],
+  "summary": {
+    "active_accuracy": 1.0, "active_mean_censored_probes": 1, "active_mean_final_entropy_bits": 4.1747210255066675e-07,
+    "mean_mode_purity": 1.0, "mean_retained_rank": 1, "mean_viable_count": 62.8125,
+    "random_accuracy": 1.0, "random_mean_censored_probes": 2, "random_mean_final_entropy_bits": 0.16126040114046597,
+    "seed_count": 16,
+    "transfer": {
+      "correct": {"mean_best_mse": 0.0, "mean_censored_evaluations": 22.115384615384617, "median_censored_evaluations": 12.5, "success_rate": 1.0},
+      "restart": {"mean_best_mse": 1.346153846153846, "mean_censored_evaluations": 306.5, "median_censored_evaluations": 253.5, "success_rate": 0.5384615384615384},
+      "scrambled": {"mean_best_mse": 0.6474358974358974, "mean_censored_evaluations": 178.19230769230768, "median_censored_evaluations": 32.5, "success_rate": 0.7692307692307693},
+      "wrong": {"mean_best_mse": 1.5705128205128205, "mean_censored_evaluations": 388.03846153846155, "median_censored_evaluations": 459.0, "success_rate": 0.5}
+    },
+    "valid_seed_count": 13, "valid_seed_fraction": 0.8125
+  },
+  "thresholds_unchanged_from_v0": {"active_probe_advantage": 0.5, "mode_purity": 0.95, "transfer_eval_ratio": 0.75, "transfer_success_slack": 0.05, "valid_seed_fraction": 0.7},
+  "v0_canonical_seed_range": [100, 115]
+}
