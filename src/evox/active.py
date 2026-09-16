@@ -2,13 +2,12 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Callable, Hashable, Mapping, Protocol, Sequence, TypeVar
+from typing import Callable, Generic, Hashable, Mapping, Protocol, Sequence, TypeVar
 
 import numpy as np
 
 H = TypeVar("H")
 I = TypeVar("I", bound=Hashable)
-O = TypeVar("O")
 
 
 class PredictiveDistribution(Protocol):
@@ -77,6 +76,25 @@ class GaussianDistribution:
         observations = float(self.mean) + math.sqrt(2.0) * float(self.sigma) * nodes
         normalized = weights / math.sqrt(math.pi)
         return tuple((float(x), float(w)) for x, w in zip(observations, normalized))
+
+
+@dataclass(frozen=True)
+class IdentificationStep(Generic[I]):
+    intervention: I
+    information_gain: float
+    observation: object
+    prior: np.ndarray
+    posterior: np.ndarray
+    confidence: float
+
+
+@dataclass(frozen=True)
+class IdentificationResult(Generic[H, I]):
+    map_hypothesis: H
+    posterior: np.ndarray
+    steps: tuple[IdentificationStep[I], ...]
+    reached_confidence: bool
+    probes_used: int
 
 
 def entropy_bits(probabilities: np.ndarray | Sequence[float]) -> float:
@@ -171,3 +189,75 @@ def choose_intervention(
             best_intervention = intervention
             best_gain = gain
     return best_intervention, float(best_gain)
+
+
+def run_identification(
+    hypotheses: Sequence[H],
+    interventions: Sequence[I],
+    predict: Callable[[H, I], PredictiveDistribution],
+    observe: Callable[[I], object],
+    *,
+    budget: int,
+    confidence: float,
+    policy: str,
+    rng: np.random.Generator,
+    prior: np.ndarray | Sequence[float] | None = None,
+) -> IdentificationResult[H, I]:
+    if not hypotheses:
+        raise ValueError("hypotheses must not be empty")
+    if not interventions:
+        raise ValueError("interventions must not be empty")
+    if budget <= 0:
+        raise ValueError("budget must be positive")
+    if not 0.0 < confidence <= 1.0:
+        raise ValueError("confidence must lie in (0, 1]")
+    if policy not in {"active", "random"}:
+        raise ValueError("policy must be 'active' or 'random'")
+
+    posterior = (
+        np.full(len(hypotheses), 1.0 / len(hypotheses), dtype=float)
+        if prior is None
+        else _normalize_prior(prior, len(hypotheses))
+    )
+    used: set[I] = set()
+    steps: list[IdentificationStep[I]] = []
+
+    while len(steps) < budget and len(used) < len(interventions):
+        if float(np.max(posterior)) >= confidence:
+            break
+        available = sorted((item for item in interventions if item not in used), key=repr)
+        if policy == "active":
+            intervention, information_gain = choose_intervention(
+                hypotheses, interventions, predict, posterior, used=used
+            )
+        else:
+            intervention = available[int(rng.integers(len(available)))]
+            predictions_for_gain = [
+                predict(hypothesis, intervention) for hypothesis in hypotheses
+            ]
+            information_gain = expected_information_gain(posterior, predictions_for_gain)
+
+        before = posterior.copy()
+        predictions = [predict(hypothesis, intervention) for hypothesis in hypotheses]
+        observation = observe(intervention)
+        posterior = posterior_update(before, predictions, observation)
+        used.add(intervention)
+        steps.append(
+            IdentificationStep(
+                intervention=intervention,
+                information_gain=float(information_gain),
+                observation=observation,
+                prior=before,
+                posterior=posterior.copy(),
+                confidence=float(np.max(posterior)),
+            )
+        )
+
+    map_index = int(np.argmax(posterior))
+    return IdentificationResult(
+        map_hypothesis=hypotheses[map_index],
+        posterior=posterior.copy(),
+        steps=tuple(steps),
+        reached_confidence=float(np.max(posterior)) >= confidence,
+        probes_used=len(steps),
+    )
