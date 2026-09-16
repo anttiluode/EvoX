@@ -95,6 +95,52 @@ def node_count(node: Node) -> int:
     return 1 + sum(node_count(child) for child in node.children)
 
 
+def tree_depth(node: Node) -> int:
+    if not node.children:
+        return 1
+    return 1 + max(tree_depth(child) for child in node.children)
+
+
+def syntax_features(node: Node) -> np.ndarray:
+    counts = {
+        "x0": 0,
+        "x1": 0,
+        "x2": 0,
+        "constants": 0,
+        "neg": 0,
+        "add": 0,
+        "sub": 0,
+        "mul": 0,
+    }
+
+    def visit(current: Node) -> None:
+        if current.op in ("x0", "x1", "x2"):
+            counts[current.op] += 1
+        elif current.op in CONSTANTS:
+            counts["constants"] += 1
+        elif current.op in counts:
+            counts[current.op] += 1
+        for child in current.children:
+            visit(child)
+
+    visit(node)
+    return np.asarray(
+        [
+            node_count(node),
+            tree_depth(node),
+            counts["x0"],
+            counts["x1"],
+            counts["x2"],
+            counts["constants"],
+            counts["neg"],
+            counts["add"],
+            counts["sub"],
+            counts["mul"],
+        ],
+        dtype=float,
+    )
+
+
 def to_source(node: Node) -> str:
     if node.op.startswith("const"):
         return str(int(CONSTANTS[node.op]))

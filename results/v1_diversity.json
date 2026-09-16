@@ -1,0 +1,110 @@
+{
+  "canonical_seed_range": [400, 431],
+  "classifications": {
+    "baseline": "BASELINE",
+    "lineage_niching": "NO_PRESERVATION_GAIN",
+    "neutral_archive": "NO_PRESERVATION_GAIN",
+    "structural_novelty": "NO_PRESERVATION_GAIN"
+  },
+  "config": {
+    "archive_capacity": 64,
+    "archive_fraction": 0.25,
+    "canonical_seed_count": 32,
+    "canonical_seed_start": 400,
+    "elite_count": 24,
+    "generations": 16,
+    "max_depth": 3,
+    "max_probes": 3,
+    "mode_probe_count": 120,
+    "novelty_fraction": 0.75,
+    "population_size": 128,
+    "posterior_confidence": 0.95,
+    "probe_sigma": 2.0,
+    "transfer_elites": 12,
+    "transfer_generations": 8,
+    "transfer_population": 64,
+    "viable_mse": 1e-12
+  },
+  "experiment": "EvoX v1 probe-blind diversity preservation",
+  "overall_positive": false,
+  "pilot_seed_range_used_for_tuning": [300, 307],
+  "summaries": {
+    "baseline": {
+      "active_accuracy": 1.0,
+      "active_mean_censored_probes": 1.0,
+      "mean_minority_mode_fraction": 0.04422964719428459,
+      "mean_mode_purity": 1.0,
+      "mean_viable_count": 45.90625,
+      "median_best_visible_mse": 0.0,
+      "random_accuracy": 1.0,
+      "random_mean_censored_probes": 2.3529411764705883,
+      "seed_count": 32,
+      "transfer": {
+        "correct": {"mean_censored_evaluations": 51.029411764705884, "success_rate": 1.0},
+        "restart": {"mean_censored_evaluations": 296.8529411764706, "success_rate": 0.6470588235294118}
+      },
+      "valid_seed_count": 17,
+      "valid_seed_fraction": 0.53125
+    },
+    "structural_novelty": {
+      "active_accuracy": 1.0,
+      "active_mean_censored_probes": 1.0,
+      "mean_minority_mode_fraction": 0.0727369617226633,
+      "mean_mode_purity": 1.0,
+      "mean_viable_count": 49.9375,
+      "median_best_visible_mse": 0.0,
+      "random_accuracy": 1.0,
+      "random_mean_censored_probes": 2.260869565217391,
+      "seed_count": 32,
+      "transfer": {
+        "correct": {"mean_censored_evaluations": 36.15217391304348, "success_rate": 1.0},
+        "restart": {"mean_censored_evaluations": 293.45652173913044, "success_rate": 0.6739130434782609}
+      },
+      "valid_seed_count": 23,
+      "valid_seed_fraction": 0.71875
+    },
+    "lineage_niching": {
+      "active_accuracy": 1.0,
+      "active_mean_censored_probes": 1.0,
+      "mean_minority_mode_fraction": 0.0678099634428035,
+      "mean_mode_purity": 1.0,
+      "mean_viable_count": 31.40625,
+      "median_best_visible_mse": 0.0,
+      "random_accuracy": 1.0,
+      "random_mean_censored_probes": 2.3823529411764706,
+      "seed_count": 32,
+      "transfer": {
+        "correct": {"mean_censored_evaluations": 47.205882352941174, "success_rate": 1.0},
+        "restart": {"mean_censored_evaluations": 301.02941176470586, "success_rate": 0.6176470588235294}
+      },
+      "valid_seed_count": 17,
+      "valid_seed_fraction": 0.53125
+    },
+    "neutral_archive": {
+      "active_accuracy": 1.0,
+      "active_mean_censored_probes": 1.0,
+      "mean_minority_mode_fraction": 0.04134440439514909,
+      "mean_mode_purity": 1.0,
+      "mean_viable_count": 48.5,
+      "median_best_visible_mse": 0.0,
+      "random_accuracy": 1.0,
+      "random_mean_censored_probes": 2.34375,
+      "seed_count": 32,
+      "transfer": {
+        "correct": {"mean_censored_evaluations": 56.53125, "success_rate": 0.96875},
+        "restart": {"mean_censored_evaluations": 278.0625, "success_rate": 0.65625}
+      },
+      "valid_seed_count": 16,
+      "valid_seed_fraction": 0.5
+    }
+  },
+  "thresholds": {
+    "active_probe_advantage": 0.5,
+    "minority_mode_fraction": 0.15,
+    "mode_purity": 0.95,
+    "transfer_eval_ratio": 0.75,
+    "transfer_success_slack": 0.05,
+    "valid_seed_fraction": 0.85,
+    "visible_mse_slack": 1e-12
+  }
+}

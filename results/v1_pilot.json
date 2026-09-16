@@ -1,0 +1,44 @@
+{
+  "experiment": "EvoX v1 pilot (exploratory; excluded from canonical classification)",
+  "frozen_after_pilot": {
+    "archive_capacity": 64,
+    "archive_fraction": 0.25,
+    "novelty_fraction": 0.75
+  },
+  "seed_range": [300, 307],
+  "summaries": {
+    "baseline": {
+      "valid_seed_count": 6,
+      "valid_seed_fraction": 0.75,
+      "mean_minority_mode_fraction": 0.0438738492192388,
+      "mean_mode_purity": 1.0,
+      "active_mean_censored_probes": 1.0,
+      "random_mean_censored_probes": 2.5833333333333335,
+      "correct_transfer_mean_censored_evaluations": 36.166666666666664,
+      "restart_mean_censored_evaluations": 402.3333333333333
+    },
+    "structural_novelty": {
+      "valid_seed_count": 7,
+      "valid_seed_fraction": 0.875,
+      "mean_minority_mode_fraction": 0.12878621417402955,
+      "mean_mode_purity": 0.9912536443148688,
+      "active_mean_censored_probes": 1.0,
+      "random_mean_censored_probes": 2.642857142857143,
+      "correct_transfer_success_rate": 0.9285714285714286,
+      "correct_transfer_mean_censored_evaluations": 66.0,
+      "restart_mean_censored_evaluations": 384.2857142857143
+    },
+    "lineage_niching": {
+      "valid_seed_count": 3,
+      "valid_seed_fraction": 0.375,
+      "mean_minority_mode_fraction": 0.06540404040404041,
+      "mean_mode_purity": 1.0
+    },
+    "neutral_archive": {
+      "valid_seed_count": 5,
+      "valid_seed_fraction": 0.625,
+      "mean_minority_mode_fraction": 0.03588997802771117,
+      "mean_mode_purity": 1.0
+    }
+  }
+}
