@@ -9,11 +9,11 @@ HYPOTHESES = ("reverse", "rotate_left", "rotate_right", "swap_pairs")
 PASSIVE = (0, 0, 0, 0)
 INTERVENTIONS = (
     PASSIVE,
-    (0, 1, 0, 1),
-    (0, 1, 1, 0),
-    (0, 0, 1, 1),
+    (0, 0, 0, 1),
+    (0, 0, 0, 2),
+    (0, 0, 1, 0),
+    (0, 0, 2, 0),
     (0, 1, 2, 3),
-    (2, 2, 3, 3),
 )
 FOLLOWUP_PAYLOAD = (9, 4, 7, 2, 5, 1)
 
