@@ -1,0 +1,44 @@
+name: v3-experiment
+
+on:
+  push:
+    branches: [evox-v3-active-mechanism-engine]
+    paths:
+      - .v3-experiment-trigger
+
+jobs:
+  experiment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e .
+      - name: Run V3 sweep
+        shell: bash
+        run: |
+          mode="$(tr -d '\r\n ' < .v3-experiment-trigger)"
+          echo "MODE=$mode" >> "$GITHUB_ENV"
+          if [ "$mode" = "smoke" ]; then
+            python -m experiments.run_v3_active_mechanisms --seed-start 700 --seed-count 2 --out results/v3_smoke.json
+            echo "RESULT=results/v3_smoke.json" >> "$GITHUB_ENV"
+          elif [ "$mode" = "pilot" ]; then
+            python -m experiments.run_v3_active_mechanisms --seed-start 700 --seed-count 16 --out results/v3_pilot.json
+            echo "RESULT=results/v3_pilot.json" >> "$GITHUB_ENV"
+          elif [ "$mode" = "canonical" ]; then
+            python -m experiments.run_v3_active_mechanisms --seed-start 800 --seed-count 128 --out results/v3_active_mechanisms.json
+            echo "RESULT=results/v3_active_mechanisms.json" >> "$GITHUB_ENV"
+          else
+            echo "Unknown V3 experiment trigger: $mode" >&2
+            exit 2
+          fi
+      - name: Show classifications and summaries
+        run: |
+          python -c 'import json,os; d=json.load(open(os.environ["RESULT"])); print(json.dumps({n:{"classification":v["classification"],"summary":v["summary"]} for n,v in d["domains"].items()},indent=2,sort_keys=True)); print("overall_pass",d["overall_pass"])'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: evox-v3-${{ github.sha }}
+          path: ${{ env.RESULT }}
