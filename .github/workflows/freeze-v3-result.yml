@@ -1,0 +1,45 @@
+name: freeze-v3-result
+
+on:
+  push:
+    branches: [evox-v3-active-mechanism-engine]
+    paths:
+      - .v3-freeze-trigger
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  freeze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: evox-v3-active-mechanism-engine
+      - name: Download exact canonical artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          rm -rf /tmp/evox-v3-artifact
+          mkdir -p /tmp/evox-v3-artifact
+          gh run download 35088799353 \
+            --repo anttiluode/EvoX \
+            --name evox-v3-d4053be892bb61a50ce0be899afd58125ebd0400 \
+            --dir /tmp/evox-v3-artifact
+          test -f /tmp/evox-v3-artifact/v3_active_mechanisms.json
+          python - <<'PY'
+          import hashlib
+          p='/tmp/evox-v3-artifact/v3_active_mechanisms.json'
+          data=open(p,'rb').read()
+          print('bytes', len(data))
+          print('sha256', hashlib.sha256(data).hexdigest())
+          PY
+          cp /tmp/evox-v3-artifact/v3_active_mechanisms.json results/v3_active_mechanisms.json
+      - name: Commit exact receipt
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add results/v3_active_mechanisms.json
+          git commit -m 'results: freeze exact EvoX V3 canonical receipt'
+          git push origin HEAD:evox-v3-active-mechanism-engine
