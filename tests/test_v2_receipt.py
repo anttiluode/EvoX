@@ -1,6 +1,12 @@
 from experiments.run_v2_behavioral import V2Config, classify_generic, run_strategy_seed
 
 
+def test_v2_freezes_structural_and_behavioral_novelty_separately():
+    config = V2Config()
+    assert config.structural_novelty_fraction == 0.75
+    assert config.behavioral_novelty_fraction == 0.50
+
+
 def test_v2_smoke_has_equal_labeled_budget_and_explicit_descriptor_cost():
     config = V2Config(
         population_size=32,
